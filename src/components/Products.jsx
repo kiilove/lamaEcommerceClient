@@ -17,13 +17,14 @@ const Products = ({ cat, filters, sort }) => {
   useEffect(() => {
     const getProducts = async () => {
       try {
+        console.log(cat);
         const res = await axios.get(
           cat
             ? `http://localhost:5000/api/products?category=${cat}`
             : "http://localhost:5000/api/products"
         );
         setProducts(res.data);
-        console.log(products);
+        //console.log(products);
       } catch (err) {
         console.log(err);
       }
@@ -54,11 +55,13 @@ const Products = ({ cat, filters, sort }) => {
         setFilteredProducts((prev) =>
           [...prev].sort((a, b) => a.price - b.price)
         );
+        console.log(filteredProducts);
         break;
       case "priceDesc":
         setFilteredProducts((prev) =>
-          [...prev].sort((a, b) => b.createdAt - a.createdAt)
+          [...prev].sort((a, b) => b.price - a.price)
         );
+        console.log(filteredProducts);
         break;
 
       default:
@@ -67,10 +70,11 @@ const Products = ({ cat, filters, sort }) => {
   }, [sort]);
   return (
     <Container>
-      {sort}
-      {filteredProducts.map((item, index) => (
-        <Product item={item} key={index} />
-      ))}
+      {cat
+        ? filteredProducts.map((item, index) => (
+            <Product item={item} key={index} />
+          ))
+        : products.map((item, index) => <Product item={item} key={index} />)}
     </Container>
   );
 };

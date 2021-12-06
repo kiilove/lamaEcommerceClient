@@ -1,9 +1,16 @@
-import { Add, Remove } from "@material-ui/icons";
+import {
+  Add,
+  AirlineSeatReclineNormalRounded,
+  Remove,
+} from "@material-ui/icons";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import styled from "styled-components";
 import Announcement from "../components/Announcement";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import Newsletter from "../components/Newsletter";
+import { publicRequest } from "../requestMethod";
 import { mobile } from "../responsive";
 
 const Container = styled.div``;
@@ -51,6 +58,7 @@ const FilterContainer = styled.div`
 const Filter = styled.div`
   display: flex;
   align-items: center;
+  flex: 1;
 `;
 
 const FilterTitle = styled.span`
@@ -61,6 +69,7 @@ const FilterTitle = styled.span`
 const FilterColor = styled.div`
   width: 20px;
   height: 20px;
+  border: 1px solid black;
   border-radius: 50%;
   background-color: ${(props) => props.color};
   margin: 0 5px;
@@ -108,47 +117,93 @@ const Button = styled.button`
 `;
 
 const Product = () => {
+  const location = useLocation();
+  const id = location.pathname.split("/")[2];
+  const [product, setProduct] = useState({});
+  const [quantity, setQuantity] = useState(1);
+  const [color, setColor] = useState("");
+  const [size, setSize] = useState("");
+
+  useEffect(() => {
+    const getProduct = async () => {
+      try {
+        const res = await publicRequest.get("/products/find/" + id);
+        res.data && setProduct(res.data);
+        res.color && setColor(res.color[0]);
+        res.size && setSize(res.size[0]);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    getProduct();
+  }, [id]);
+
+  const handleDecrease = () => {
+    quantity > 1 && setQuantity(quantity - 1);
+  };
+
+  const handleIncrease = () => {
+    product.stock && quantity < product.stock
+      ? setQuantity(quantity + 1)
+      : setQuantity(product.stock);
+  };
+
+  const handleCart = () => {
+    //update cart
+    console.log({ id, color, size, quantity });
+  };
   return (
     <Container>
       <Announcement />
       <Navbar />
       <Wrapper>
         <ImgContainer>
-          <Image src="https://i.ibb.co/S6qMxwr/jead.jpg" />
+          <Image src={product.img} />
         </ImgContainer>
         <InfoContainer>
-          <Title>데님 점프슈트</Title>
-          <Description>
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quo
-            reiciendis nobis sequi maxime pariatur magnam, delectus debitis
-            sapiente dolorem eligendi similique? Magni maxime eum at! Corrupti
-            fuga illum inventore libero!
-          </Description>
-          <Price>35,000원</Price>
+          <Title>
+            {product.title}
+            {color}
+            {size}
+          </Title>
+          <Description>{product.desc}</Description>
+          <Price>{product.price}원</Price>
           <FilterContainer>
             <Filter>
-              <FilterTitle>색상</FilterTitle>
-              <FilterColor color="black"></FilterColor>
-              <FilterColor color="darkblue"></FilterColor>
-              <FilterColor color="gray"></FilterColor>
+              <FilterTitle style={{ marginRight: "10px" }}>색상</FilterTitle>
+              {product.color &&
+                product.color.map((item) => (
+                  <FilterColor
+                    color={item.toString()}
+                    onClick={() => {
+                      setColor(item);
+                    }}
+                  />
+                ))}
             </Filter>
             <Filter>
               <FilterTitle>사이즈</FilterTitle>
-              <FilterSize>
-                <FilterSizeOption>XS</FilterSizeOption>
-                <FilterSizeOption>S</FilterSizeOption>
-                <FilterSizeOption>M</FilterSizeOption>
-                <FilterSizeOption>L</FilterSizeOption>
-                <FilterSizeOption>XL</FilterSizeOption>
+              <FilterSize
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSize(e.target.value);
+                }}
+              >
+                {product.size &&
+                  product.size.map((item) => (
+                    <FilterSizeOption value={item.toString()}>
+                      {item.toString()}
+                    </FilterSizeOption>
+                  ))}
               </FilterSize>
             </Filter>
           </FilterContainer>
           <AddContainer>
             <AmountContainer>
-              <Remove />
-              <Amount>1</Amount>
-              <Add />
-              <Button>장바구니</Button>
+              <Remove onClick={handleDecrease} style={{ cursor: "pointer" }} />
+              <Amount>{quantity}</Amount>
+              <Add onClick={handleIncrease} style={{ cursor: "pointer" }} />
+              <Button onClick={handleCart}>장바구니</Button>
             </AmountContainer>
           </AddContainer>
         </InfoContainer>
